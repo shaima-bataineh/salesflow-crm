@@ -1,0 +1,41 @@
+# ملفات النظام
+.DS_Store
+Thumbs.db
+
+# Node modules
+backend/node_modules/
+# لو عندك node_modules في الجذر
+node_modules/
+
+# ملفات البيئة السرية
+backend/.env
+.env
+
+# ملفات الـ logs
+backend/*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# مجلدات بناء المشروع
+backend/dist/
+backend/build/
+
+# ملفات مؤقتة / محررات
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+
+# مجلدات الـ IDE
+.vscode/
+.idea/
+
+# ملفات coverage
+coverage/
+
+# أي ملفات أو مجلدات أخرى انت مش عايز Git يتتبعها
+# مثلا ملفات upload كبيرة
+backend/uploads/
