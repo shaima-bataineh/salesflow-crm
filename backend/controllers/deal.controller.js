@@ -1,5 +1,6 @@
 const Deal = require("../models/Deal");
-
+const Lead = require("../models/Lead");
+const Customer = require("../models/Customer");
 const AppError = require("../utils/AppError");// bonus
 
 
@@ -55,16 +56,58 @@ exports.getDealById = async (req, res, next) => {
 exports.updateDeal = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deal = await Deal.findById(id);
-    if (!deal) 
-     throw new AppError("Deal not found", 404, "E001"); // bonus
 
+    const deal = await Deal.findById(id);
+    if (!deal) {
+      throw new AppError("Deal not found", 404, "E001");
+    }
+
+    // Authorization
     if (req.user.role !== "admin" && deal.createdBy.toString() !== req.user.id) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const updatedDeal = await Deal.findByIdAndUpdate(id, { ...req.body }, { returnDocument: "after" });
-    res.status(200).json({ message: "Deal updated", deal: updatedDeal });
+    // تحديث القيم
+    deal.status = req.body.status ?? deal.status;
+    deal.value = req.body.value ?? deal.value;
+
+    // إذا الصفقة ربحت وما في customer
+    if (deal.status === "won" && !deal.customer) {
+
+      const lead = await Lead.findById(deal.lead);
+      if (!lead) {
+        throw new AppError("Lead not found", 404, "E002");
+      }
+
+      //  تحقق إذا Customer موجود مسبقاً بنفس الإيميل
+      let customer = await Customer.findOne({ email: lead.email });
+
+      if (!customer) {
+        // إنشاء Customer جديد
+        customer = await Customer.create({
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          company: lead.company,
+          createdBy: deal.createdBy
+        });
+      }
+
+      // ربط Deal بالـ Customer
+      deal.customer = customer._id;
+
+      // تحديث حالة Lead
+      lead.status = "converted";
+      await lead.save();
+    }
+
+    await deal.save();
+
+    res.status(200).json({
+      message: "Deal updated successfully",
+      deal
+    });
+
   } catch (err) {
     next(err);
   }

@@ -14,7 +14,12 @@ exports.createCustomer = async (req, res, next) => {
     res.status(201).json(saved);
 
   } catch (err) {
-    next(err);
+    // لو الخطا بسبب Email موجود مسبقًا
+    if (err.code === 11000 && err.keyPattern && err.keyPattern.email) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    next(err); // أي خطأ ثاني يروح ل errorHandler
   }
 };
 
@@ -67,26 +72,24 @@ exports.updateCustomer = async (req, res, next) => {
 exports.deleteCustomer = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const customer = await Customer.findById(id);
 
-     // تحقق من صلاحية الـ ID
-    if (!require("mongoose").Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid deal id" });
-    }
-  
-    // فقط admin أو الشخص الذي أنشأ العميل يمكنه الحذف
-    if (req.user.role !== "admin") {
+    if (!customer) return next(new AppError("Customer not found", 404, "E001"));
+
+    if (req.user.role !== "admin")
       return res.status(403).json({ error: "Access denied: only admin can delete" });
-    }
-     const deletedCustomer = await Customer.findByIdAndDelete(id);
 
-    if (!deletedCustomer) 
-       throw new AppError("Customer not found", 404, "E001");
+    customer.isDeleted = true;
+    customer.deletedAt = new Date();
+    await customer.save();
 
-    res.status(200).json({ message: "Customer deleted", customer: deletedCustomer });
+    res.status(200).json({ message: "Customer soft deleted", customer });
   } catch (err) {
     next(err);
   }
 };
+
+
 
 exports.getCustomerById = async (req, res, next) => {
   try {

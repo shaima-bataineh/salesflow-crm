@@ -25,6 +25,7 @@ app.use("/api/users", require("./routes/users"));
 app.use("/api/customers", require("./routes/customers"));
 app.use("/api/deals", require("./routes/deals"));
 app.use("/api/dashboard", require("./routes/dashboard"));
+app.use("/api/leads", require("./routes/leads"));
 // Error handler (لازم آخر شي)
 const errorHandler = require("./middleware/errorHandler");
 app.use(errorHandler);

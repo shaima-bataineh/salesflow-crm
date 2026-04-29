@@ -19,30 +19,31 @@ const bcrypt = require("bcryptjs");
 
 exports.createUser = async (req, res, next) => {
   try {
-    // فقط الـ admin يقدر يضيف مستخدم
     if (req.user.role !== "admin")
       return res.status(403).json({ error: "Access denied" });
 
     const { username, email, password, role } = req.body;
 
-    // تحقق إذا المستخدم موجود مسبقاً
+    // تحقق إذا المستخدم موجود
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ error: "The user already exists" });
 
-    // تشفير كلمة المرور
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // إذا ما حدد الـ role، خليه sales
     const newUser = new User({
       username,
       email,
-      password: hashedPassword,
-      role,
+      password, // pre-save hook رح يشفرها
+      role: role || "sales"
     });
 
     await newUser.save();
 
-    res.status(201).json({ message: "User added", user: newUser });
+    // ما نرسل كلمة المرور للـ frontend
+    const userToReturn = newUser.toObject();
+    delete userToReturn.password;
+
+    res.status(201).json({ message: "User added", user: userToReturn });
   } catch (err) {
     next(err);
   }
@@ -53,8 +54,8 @@ exports.updateUser = async (req, res, next) => {
     // فقط الـ admin أو صاحب الحساب نفسه يمكنه التعديل
     const { id } = req.params;
 
-    if (req.user.role !== "admin" && req.user._id !== id)
-      return res.status(403).json({ error: "Access denied" });
+   if (req.user.role !== "admin" &&req.user.id !== id)  
+   return res.status(403).json({ error: "Access denied" });
 
     const { username, email, password, role } = req.body;
 
@@ -71,7 +72,7 @@ exports.updateUser = async (req, res, next) => {
       updateData.role = role;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(id, updateData, { returnDocument: "after" }).select("-password");
 
     if (!updatedUser) 
        throw new AppError("User not found", 404, "E001");// bonus
@@ -88,12 +89,22 @@ exports.deleteUser = async (req, res, next) => {
     //  return res.status(200).json(req.user.role)
 
   try {
+        const { id } = req.params;
+        const user = await User.findById(id);
+    if (!user) 
+      throw next(new AppError("User not found", 404, "E003"));
 
+// if not admin prevent delete
     if (req.user.role !== "admin")
       return res.status(403).json({ error: "Access denied: only admin can delete" });
+    if (req.user.id === id)
+  return res.status(400).json({ error: "Admin cannot delete himself" });
 
-    await User.findByIdAndDelete(req.params.id);
-    res.status(200).json("User deleted");
+    const deletedUser = await User.findByIdAndDelete(id);
+    res.status(200).json(
+      {message:"User deleted",
+        user:deletedUser, //recive all the data 
+      });
 
   } catch (err) {
     next(err);

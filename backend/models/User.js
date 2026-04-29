@@ -5,13 +5,14 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-role: {
-  type: String,
-  enum: ["admin", "sales"],
-  default: undefined
-}
+  role: { 
+    type: String, 
+    enum: ["admin", "sales"], 
+    default: "sales" // بدل undefined
+  }
 }, { timestamps: true });
 
+// قبل الحفظ: تشفير كلمة المرور
 UserSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
@@ -19,10 +20,11 @@ UserSchema.pre("save", async function () {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   } catch (error) {
+    console.error(error);
   }
 });
 
-
+// مقارنة كلمة المرور عند تسجيل الدخول
 UserSchema.methods.comparePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
