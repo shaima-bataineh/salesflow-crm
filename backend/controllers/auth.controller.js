@@ -18,14 +18,14 @@ exports.createUserByAdmin = async (req, res, next) => {
     const newUser = new User({ username, email, password, role });
     const savedUser = await newUser.save();
 
-    const { password: pwd, ...others } = savedUser._doc;
+    const { password: pwd, ...others } = savedUser._doc; // saveduser._doc
     res.status(201).json(others);
   } catch (err) {
     next(err);
   }
 };
 
-exports.login = async (req, res, next) => {
+exports.login = async (req, res, next) => { // next 
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });

@@ -122,7 +122,7 @@ export default function Dashboard() {
               Dashboard Overview
             </h1>
             <p className="text-gray-500 text-sm sm:text-base mt-1">
-              Welcome back 👋 Here’s your system summary
+              Welcome back! Here’s your system summary
             </p>
           </div>
 
