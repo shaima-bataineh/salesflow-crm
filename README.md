@@ -2,7 +2,7 @@
 
 A robust Full-Stack Customer Relationship Management (CRM) system designed to streamline customer interactions, track sales pipelines, and optimize business workflows.
 
-🔗 **[Live Demo](https://salesflow-crm-ten.vercel.app)**
+🔗 **[SalesFlow](https://salesflow-crm-ten.vercel.app)**
 
 ---
 
